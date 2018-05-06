@@ -60,9 +60,9 @@ def delfind(s,e):
     return a,b
 
 def delFiles(s,e,a,b,kan):
-    """Requires four arguments: (1) the starting genbank seqRecord s,
-    (2,3) string positions a and b denoting the deletion in s,
-    and (4) a genbank seqRecord kan that contains the Isce_kan cassette
+    """Requires five arguments: (1,2) the starting and ending genbank seqRecords s and e,
+    (3,4) string positions a and b denoting the deletion in s,
+    and (5) a genbank seqRecord kan that contains the Isce_kan cassette
 
     Returns a concatenated genbank seqRecord and file in which the deleted
     sequence is replaced with the kan cassette, flanked by 40 bp direct repeats,
@@ -91,54 +91,99 @@ def delFiles(s,e,a,b,kan):
         dr2feat = SeqFeature(FeatureLocation(start=dr2start,end=dr2end),type='misc_feature',qualifiers={'note':"DirectRepeat"})
         INT.features.append(dr1feat)
         INT.features.append(dr2feat)
-
-    flank1start = a-40
-    flank1end = a
-    flank2start = a+20+len(kan)+20
-    flank2end = a+20+len(kan)+20+40
-
-    homflank1 = SeqFeature(FeatureLocation(start=flank1start,end=flank1end),type='misc_feature',qualifiers={'note':"HomologyFlank1"})
-    homflank2 = SeqFeature(FeatureLocation(start=flank2start,end=flank2end),type='misc_feature',qualifiers={'note':"HomologyFlank2"})        
-
-    INT.features.append(homflank1)
-    INT.features.append(homflank2)
-
-    FwPrimerEnd = dr1end + 24
-    RvPrimerStart = dr2start - 23
-
-    FwPrimer = SeqFeature(FeatureLocation(start=flank1start,end=FwPrimerEnd),type='primer_bind',strand=1,
-    qualifiers={'note':"Fw primer"})
-    RvPrimer = SeqFeature(FeatureLocation(start=RvPrimerStart,end=flank2end),type='primer_bind',strand=-1,
-    qualifiers={'note':"Rv primer"})
-
-    INT.features.append(FwPrimer)
-    INT.features.append(RvPrimer)
-
-    with open(path + '/INT.gb','w') as f:
-        SeqIO.write(INT,f,'genbank')
-    
-    Fw = INT[flank1start:FwPrimerEnd]
-    Rv = INT[RvPrimerStart:flank2end].reverse_complement()
-
-    with open(path + '/Fw_primer.gb','w') as f:
-        SeqIO.write(Fw,f,'genbank')
-
-    with open(path + '/Rv_primer.gb','w') as f:
-        SeqIO.write(Rv,f,'genbank')
-
-    PCRprod = INT[flank1start:flank2end]
-
-    with open(path + '/PCRprod.gb','w') as f:
-        SeqIO.write(PCRprod,f,'genbank')
     
     RES = (INT[:dr1end] + INT[dr2end:])
 
     if RES.seq == e.seq:
-        # print "Success!"
+        print "Success!"
+
+        flank1start = a-40
+        flank1end = a
+        flank2start = a+20+len(kan)+20
+        flank2end = a+20+len(kan)+20+40
+
+        homflank1 = SeqFeature(FeatureLocation(start=flank1start,end=flank1end),type='misc_feature',qualifiers={'note':"HomologyFlank1"})
+        homflank2 = SeqFeature(FeatureLocation(start=flank2start,end=flank2end),type='misc_feature',qualifiers={'note':"HomologyFlank2"})        
+
+        INT.features.append(homflank1)
+        INT.features.append(homflank2)
+
+        FwPrimerEnd = dr1end + 24
+        RvPrimerStart = dr2start - 23
+
+        FwPrimer = SeqFeature(FeatureLocation(start=flank1start,end=FwPrimerEnd),type='primer_bind',strand=1,qualifiers={'note':"Fw primer"})
+        RvPrimer = SeqFeature(FeatureLocation(start=RvPrimerStart,end=flank2end),type='primer_bind',strand=-1,qualifiers={'note':"Rv primer"})
+
+        INT.features.append(FwPrimer)
+        INT.features.append(RvPrimer)
+        
+        Fw = INT[flank1start:FwPrimerEnd]
+        Rv = INT[RvPrimerStart:flank2end].reverse_complement()
+
+        PCRprod = INT[flank1start:flank2end]
+
         with open(path + '/RES.gb','w') as f:
             SeqIO.write(RES,f,'genbank')
 
+        with open(path + '/INT.gb','w') as f:
+            SeqIO.write(INT,f,'genbank')
 
-a,b = delfind(s,e)
+        with open(path + '/Fw_primer.gb','w') as f:
+            SeqIO.write(Fw,f,'genbank')
 
-delFiles(s,e,a,b,kan)
+        with open(path + '/Rv_primer.gb','w') as f:
+            SeqIO.write(Rv,f,'genbank')
+        
+        with open(path + '/PCRprod.gb','w') as f:
+            SeqIO.write(PCRprod,f,'genbank')
+    else:
+        raise ValueError('ERROR: unable to construct sequences! Aborting...')
+
+def sm_insfind(s,e):
+    """Takes a starting genbank seqRecord s and an ending genbank seqRecord e
+    with e having a single contiguous insertion relative to s
+    Returns the string positions (nucleotide position - 1)
+    in s, between which the extra sequence has been inserted,
+    as well as the inserted sequence itself as a genbank SeqRecord"""
+
+    mutlen = len(e) - len(s)
+    # print "The insertion is %s bp in length" % mutlen
+    pos = 0
+    for i in range(len(e)):
+        if s.seq[i] != e.seq[i]:
+            pos = i
+            break
+
+    for x in range(-10,10):
+        endseq = e.seq[pos + x + mutlen:]
+
+        if len(s.seq[:pos+x]) + mutlen + len(endseq) == len(e.seq):
+            # print "This value of x = %s fits the length of s" % x
+            # print s.seq[:pos+x][-10:]
+            # print endseq[:10]
+            
+            if endseq == s.seq[-len(endseq):]:
+                print "The insertion is between bases %s and %s of the starting sequence" % (pos+x,pos+x+1)
+                a = pos + x
+                b = pos + x
+                insert = e[b:b+mutlen]
+                print insert.seq
+                print len(insert)
+
+                # print s.seq[:a][-10:]
+                # print s.seq[b:][:10]
+                break
+    return a,b,insert
+
+if len(e) < len(s):
+    print "Type of mutation: deletion..."
+    print "Calculating positions of deleted bases..."
+    a,b = delfind(s,e)
+    print "Bases %s to %s have been deleted in starting sequence..." % (a+1,b+1)
+    print "Building ISce_Kan integrate..."
+    delFiles(s,e,a,b,kan)
+    print "Outputting INT, RES, and primer files..."
+elif len(e) - len(s) <= 30:
+    print "Type of mutation: small insertion (less than 30bp)..."
+    print "Calculating position of insertion..."
+    sm_insfind(s,e)
