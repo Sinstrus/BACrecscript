@@ -125,21 +125,50 @@ def med_insfind(s,e):
     insertseq = ""
 
     while True:
+
         try:
             insertseq = [record for record in SeqIO.parse(path + "/insert.gb","genbank")][0].seq
-            loc = e.seq.find(insertseq)
-            insert = e[loc:loc + len(insertseq)]
+
+            if e.seq.count(insertseq) == 1:          
+                loc = e.seq.find(insertseq)
+                insert = e[loc:loc + len(insertseq)]
+            elif e.seq.count(insertseq) == 0:
+                raise IOError
+            elif e.seq.count(insertseq) > 1:
+
+                for i in range(len(s.seq)):
+                    if e.seq[i:i + len(insertseq)] == insertseq and e.seq[:i] == s.seq[:i] and e.seq[i+len(insertseq):] == s.seq[-len(e[i+len(insertseq):]):]:
+                        print "Found location!"
+                        loc = i
+                        insert = e[loc:loc + len(insertseq)]
+                        break
+            
             break
         except IOError:
             print "Unable to find 'insert' genbank file!"
 
             while True:
                 insertseq = raw_input("Paste the insert sequence: ").upper()
+
+
                 if insertseq in e.seq:
                     if len(insertseq) == len(e.seq) - len(s.seq):
-                        loc = e.seq.find(insertseq)
-                        insert = e[loc:loc + len(insertseq)]
-                        # print insert
+                        
+                        if e.seq.count(insertseq) == 1:          
+                            loc = e.seq.find(insertseq)
+                            insert = e[loc:loc + len(insertseq)]
+                        elif e.seq.count(insertseq) == 0:
+                            print "Input sequence not found in ending sequence! Try again..."
+                            continue
+                        elif e.seq.count(insertseq) > 1:
+
+                            for i in range(len(s.seq)):
+                                if e.seq[i:i + len(insertseq)] == insertseq and e.seq[:i] == s.seq[:i] and e.seq[i+len(insertseq):] == s.seq[-len(e[i+len(insertseq):]):]:
+                                    print "Found location!"
+                                    loc = i
+                                    insert = e[loc:loc + len(insertseq)]
+                                    break
+                        
                         break
                     else:
                         print "Input sequence found in ending sequence, but is too short! Try again..."
