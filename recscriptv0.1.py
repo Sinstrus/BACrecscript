@@ -123,62 +123,48 @@ def med_insfind(s,e):
     as well as the inserted sequence itself as a genbank SeqRecord"""
 
     insertseq = ""
+    mutlen = len(e) - len(s)
 
+    while True:
+        try:
+            insertseq = [record for record in SeqIO.parse(path + "/insert.gb","genbank")][0].seq
+            inslen = len(insertseq)
+            if insertseq in e.seq and inslen == mutlen:
+                break
+            else:
+                raise IOError
+        except IOError:
+            print "Unable to find valid 'insert' genbank file!"
+            while True:
+                insertseq = raw_input("Paste the insert sequence: ").upper()
+                inslen = len(insertseq)
+                if insertseq in e.seq:
+                    if inslen == mutlen:
+                        break
+                    else:
+                        print "Input sequence found in 'end' sequence, but is too short! Try again..."
+                        continue
+                else:
+                    print "Input sequence not found in 'end' sequence! Try again..."
+                    continue
+            break
     
+    inscount = e.seq.count(insertseq)
 
-    # while True:
+    if inscount == 1:
+        loc = e.seq.find(insertseq)
+        insert = e[loc:loc + inslen]
+    else:
+        for i in range(len(s)):
+            check1 = e.seq[i:i+inslen] == insertseq #checks if the current window matches insertseq
+            check2 = e.seq[:i] == s.seq[:i] #checks if e and s have identical prefixes up to the current window
+            check3 = e.seq[i+inslen:] == s.seq[-len(e.seq[i+inslen:]):] #checks if e and s have identical suffixes after the current window
 
-    #     try:
-    #         insertseq = [record for record in SeqIO.parse(path + "/insert.gb","genbank")][0].seq
-
-    #         if e.seq.count(insertseq) == 1:          
-    #             loc = e.seq.find(insertseq)
-    #             insert = e[loc:loc + len(insertseq)]
-    #         elif e.seq.count(insertseq) == 0:
-    #             raise IOError
-    #         elif e.seq.count(insertseq) > 1:
-
-    #             for i in range(len(s.seq)):
-    #                 if e.seq[i:i + len(insertseq)] == insertseq and e.seq[:i] == s.seq[:i] and e.seq[i+len(insertseq):] == s.seq[-len(e[i+len(insertseq):]):]:
-    #                     print "Found location!"
-    #                     loc = i
-    #                     insert = e[loc:loc + len(insertseq)]
-    #                     break
-            
-    #         break
-    #     except IOError:
-    #         print "Unable to find 'insert' genbank file!"
-
-    #         while True:
-    #             insertseq = raw_input("Paste the insert sequence: ").upper()
-
-
-    #             if insertseq in e.seq:
-    #                 if len(insertseq) == len(e.seq) - len(s.seq):
-                        
-    #                     if e.seq.count(insertseq) == 1:          
-    #                         loc = e.seq.find(insertseq)
-    #                         insert = e[loc:loc + len(insertseq)]
-    #                     elif e.seq.count(insertseq) == 0:
-    #                         print "Input sequence not found in ending sequence! Try again..."
-    #                         continue
-    #                     elif e.seq.count(insertseq) > 1:
-
-    #                         for i in range(len(s.seq)):
-    #                             if e.seq[i:i + len(insertseq)] == insertseq and e.seq[:i] == s.seq[:i] and e.seq[i+len(insertseq):] == s.seq[-len(e[i+len(insertseq):]):]:
-    #                                 print "Found location!"
-    #                                 loc = i
-    #                                 insert = e[loc:loc + len(insertseq)]
-    #                                 break
-                        
-    #                     break
-    #                 else:
-    #                     print "Input sequence found in ending sequence, but is too short! Try again..."
-    #                     continue
-    #             else:
-    #                 print "Input sequence not found in ending sequence! Try again..."
-    #                 continue
-    #         break
+            if check1 and check2 and check3:
+                # print "Found location of insert!"
+                loc = i
+                insert = e[loc:loc+inslen]
+                break
     
     a = loc
     b = a
