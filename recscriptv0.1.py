@@ -384,20 +384,24 @@ def lg_insFiles(s,e,a,b,kan,pSP72,insert):
     checklen1 = (corelen1 + gibslen1*2) % 250
 
     if checklen1 <= 20:
-        gibslen1 = gibslen1 - (ceil(checklen1/2.0))
+        gibslen1 = gibslen1 - int(ceil(checklen1/2.0))
 
     corelen2 = len(insert[drstart:] + s[b:b+40])
     gibslen2 = 30
     checklen2 = (corelen2 + gibslen2*2) % 250
 
     if checklen2 <= 20:
-        gibslen2 = gibslen2 - (ceil(checklen2/2.0))
+        gibslen2 = gibslen2 - int(ceil(checklen2/2.0))
     
+    FRAG1feat = SeqFeature(FeatureLocation(start=81-gibslen1,end=81+40+drend+gibslen1),type='misc_feature',qualifiers={'note':"FRAG1"})
+    SP72_INT.features.append(FRAG1feat)
+
+    output_file(SP72_INT,path + '/SP72_INT.gb')
     
 
-    INT = (s[:a] + insert[:drend] + kan + insert[drstart:] + s[b:])
+    # INT = (s[:a] + insert[:drend] + kan + insert[drstart:] + s[b:])
 
-    RES = INT[:a+drend] + INT[a+drend+len(kan)+40:] #constructs the RES SeqRecord
+    # RES = INT[:a+drend] + INT[a+drend+len(kan)+40:] #constructs the RES SeqRecord
 
     # if RES.seq == e.seq: #Is the RES identical to the end sequence?
     #     print "Success!"
@@ -461,7 +465,7 @@ elif len(e) - len(s) > limit:
     print "Calculating position of insertion..."
     a,b,insert = med_insfind(s,e)
     print "Insertion %s...%s found between bases %s and %s of starting sequence..." % (insert.seq[:20],insert.seq[-20:],a,b+1)
-    # lg_insFiles(s,e,a,b,kan,pSP72,insert)
+    lg_insFiles(s,e,a,b,kan,pSP72,insert)
 
-print pSP72.seq[:81][-20:]
-print pSP72.seq[81:][:20]
+# print pSP72.seq[:81][-20:]
+# print pSP72.seq[81:][:20]
