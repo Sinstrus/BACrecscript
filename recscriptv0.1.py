@@ -5,13 +5,19 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import IUPAC
 from Bio.SeqFeature import SeqFeature, FeatureLocation
+from math import ceil
 
 path = os.path.dirname(os.path.abspath( __file__ ))
 
-s = [record for record in SeqIO.parse(path + "/start.gb","genbank")][0]
-e = [record for record in SeqIO.parse(path + "/end.gb","genbank")][0]
+with open(path + '/start.gb','r') as f:
+    s = [record for record in SeqIO.parse(f,"genbank")][0]
 
-#ISce_Kan cassette hard-coded as the SeqRecord object below
+with open(path + '/end.gb','r') as f:
+    e = [record for record in SeqIO.parse(f,"genbank")][0]
+
+limit = 90
+
+#ISce_Kan cassette and pSP72 hard-coded as the SeqRecord object below
 kan = SeqRecord(Seq("TAGGGATAACAGGGTAATCGATTTATTCAACAAAGCCACGTTGTGTCTCAAAATCTCTGATGTTACATTGCACAAGATAAAAATATATCATCATGAACAATAAAACTGTCTGCTTACATAAACAGTAATACAAGGGGTGTTATGAGCCATATTCAACGGGAAACGTCTTGCTCGAGGCCGCGATTAAATTCCAACATGGATGCTGATTTATATGGGTATAAATGGGCTCGCGATAATGTCGGGCAATCAGGTGCGACAATCTATCGATTGTATGGGAAGCCCGATGCGCCAGAGTTGTTTCTGAAACATGGCAAAGGTAGCGTTGCCAATGATGTTACAGATGAGATGGTCAGACTAAACTGGCTGACGGAATTTATGCCTCTTCCGACCATCAAGCATTTTATCCGTACTCCTGATGATGCATGGTTACTCACCACTGCGATCCCCGGGAAAACAGCATTCCAGGTATTAGAAGAATATCCTGATTCAGGTGAAAATATTGTTGATGCGCTGGCAGTGTTCCTGCGCCGGTTGCATTCGATTCCTGTTTGTAATTGTCCTTTTAACAGCGATCGCGTATTTCGTCTCGCTCAGGCGCAATCACGAATGAATAACGGTTTGGTTGATGCGAGTGATTTTGATGACGAGCGTAATGGCTGGCCTGTTGAACAAGTCTGGAAAGAAATGCATAAGCTTTTGCCATTCTCACCGGATTCAGTCGTCACTCATGGTGATTTCTCACTTGATAACCTTATTTTTGACGAGGGGAAATTAATAGGTTGTATTGATGTTGGACGAGTCGGAATCGCAGACCGATACCAGGATCTTGCCATCCTATGGAACTGCCTCGGTGAGTTTTCTCCTTCATTACAGAAACGGCTTTTTCAAAAATATGGTATTGATAATCCTGATATGAATAAATTGCAGTTTCATTTGATGCTCGATGAGTTTTTCTAATCAGAATTGGTTAATTGGTTGTAACACTGGC",IUPAC.ambiguous_dna),id="ISce_Kan",name="ISce_Kan",description="ISce_Kan",
 features=[
     SeqFeature(FeatureLocation(start=0,end=988),strand=1,type='insertion_seq',qualifiers={'note':'Kan-Isce insertion'}),    
@@ -19,6 +25,15 @@ features=[
     SeqFeature(FeatureLocation(start=965,end=988),strand=-1,type='primer_bind',qualifiers={'note':'Kan-Isce reverse primer'}),
     SeqFeature(FeatureLocation(start=17,end=142),strand=1,type='promoter',qualifiers={'note':'KanaR promoter'}),
     SeqFeature(FeatureLocation(start=141,end=954),strand=1,type='CDS',qualifiers={'note':'aphAI'})
+]
+)
+
+pSP72 = SeqRecord(Seq("GAACTCGAGCAGCTGAAGCTTGCATGCCTGCAGGTCGACTCTAGAGGATCCCCGGGTACCGAGCTCGAATTCATCGATGATATCAGATCTGCCGGTCTCCCTATAGTGAGTCGTATTAATTTCGATAAGCCAGGTTAACCTGCATTAATGAATCGGCCAACGCGCGGGGAGAGGCGGTTTGCGTATTGGGCGCTCTTCCGCTTCCTCGCTCACTGACTCGCTGCGCTCGGTCGTTCGGCTGCGGCGAGCGGTATCAGCTCACTCAAAGGCGGTAATACGGTTATCCACAGAATCAGGGGATAACGCAGGAAAGAACATGTGAGCAAAAGGCCAGCAAAAGGCCAGGAACCGTAAAAAGGCCGCGTTGCTGGCGTTTTTCCATAGGCTCCGCCCCCCTGACGAGCATCACAAAAATCGACGCTCAAGTCAGAGGTGGCGAAACCCGACAGGACTATAAAGATACCAGGCGTTTCCCCCTGGAAGCTCCCTCGTGCGCTCTCCTGTTCCGACCCTGCCGCTTACCGGATACCTGTCCGCCTTTCTCCCTTCGGGAAGCGTGGCGCTTTCTCAATGCTCACGCTGTAGGTATCTCAGTTCGGTGTAGGTCGTTCGCTCCAAGCTGGGCTGTGTGCACGAACCCCCCGTTCAGCCCGACCGCTGCGCCTTATCCGGTAACTATCGTCTTGAGTCCAACCCGGTAAGACACGACTTATCGCCACTGGCAGCAGCCACTGGTAACAGGATTAGCAGAGCGAGGTATGTAGGCGGTGCTACAGAGTTCTTGAAGTGGTGGCCTAACTACGGCTACACTAGAAGGACAGTATTTGGTATCTGCGCTCTGCTGAAGCCAGTTACCTTCGGAAAAAGAGTTGGTAGCTCTTGATCCGGCAAACAAACCACCGCTGGTAGCGGTGGTTTTTTTGTTTGCAAGCAGCAGATTACGCGCAGAAAAAAAGGATCTCAAGAAGATCCTTTGATCTTTTCTACGGGGTCTGACGCTCAGTGGAACGAAAACTCACGTTAAGGGATTTTGGTCATGAGATTATCAAAAAGGATCTTCACCTAGATCCTTTTAAATTAAAAATGAAGTTTTAAATCAATCTAAAGTATATATGAGTAAACTTGGTCTGACAGTTACCAATGCTTAATCAGTGAGGCACCTATCTCAGCGATCTGTCTATTTCGTTCATCCATAGTTGCCTGACTCCCCGTCGTGTAGATAACTACGATACGGGAGGGCTTACCATCTGGCCCCAGTGCTGCAATGATACCGCGAGACCCACGCTCACCGGCTCCAGATTTATCAGCAATAAACCAGCCAGCCGGAAGGGCCGAGCGCAGAAGTGGTCCTGCAACTTTATCCGCCTCCATCCAGTCTATTAATTGTTGCCGGGAAGCTAGAGTAAGTAGTTCGCCAGTTAATAGTTTGCGCAACGTTGTTGCCATTGCTACAGGCATCGTGGTGTCACGCTCGTCGTTTGGTATGGCTTCATTCAGCTCCGGTTCCCAACGATCAAGGCGAGTTACATGATCCCCCATGTTGTGCAAAAAAGCGGTTAGCTCCTTCGGTCCTCCGATCGTTGTCAGAAGTAAGTTGGCCGCAGTGTTATCACTCATGGTTATGGCAGCACTGCATAATTCTCTTACTGTCATGCCATCCGTAAGATGCTTTTCTGTGACTGGTGAGTACTCAACCAAGTCATTCTGAGAATAGTGTATGCGGCGACCGAGTTGCTCTTGCCCGGCGTCAATACGGGATAATACCGCGCCACATAGCAGAACTTTAAAAGTGCTCATCATTGGAAAACGTTCTTCGGGGCGAAAACTCTCAAGGATCTTACCGCTGTTGAGATCCAGTTCGATGTAACCCACTCGTGCACCCAACTGATCTTCAGCATCTTTTACTTTCACCAGCGTTTCTGGGTGAGCAAAAACAGGAAGGCAAAATGCCGCAAAAAAGGGAATAAGGGCGACACGGAAATGTTGAATACTCATACTCTTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTATTGTCTCATGAGCGGATACATATTTGAATGTATTTAGAAAAATAAACAAATAGGGGTTCCGCGCACATTTCCCCGAAAAGTGCCACCTGACGTCTAAGAAACCATTATTATCATGACATTAACCTATAAAAATAGGCGTATCACGAGGCCCTTTCGTCTCGCGCGTTTCGGTGATGACGGTGAAAACCTCTGACACATGCAGCTCCCGGAGACGGTCACAGCTTGTCTGTAAGCGGATGCCGGGAGCAGACAAGCCCGTCAGGGCGCGTCAGCGGGTGTTGGCGGGTGTCGGGGCTGGCTTAACTATGCGGCATCAGAGCAGATTGTACTGAGAGTGCACCATATGGACATATTGTCGTTAGAACGCGGCTACAATTAATACATAACCTTATGTATCATACACATACGATTTAGGTGACACTATA",IUPAC.ambiguous_dna),id="pSP72",name="pSP72",description="pSP72",
+features=[
+    SeqFeature(FeatureLocation(start=360,end=980),strand=-1,type='rep_origin',qualifiers={'label':'pBR322_origin'}),    
+    SeqFeature(FeatureLocation(start=99,end=118),strand=-1,type='promoter',qualifiers={'label':'T7_promoter'}),
+    SeqFeature(FeatureLocation(start=2036,end=2065),strand=-1,type='promoter',qualifiers={'label':'AmpR_promoter'}),
+    SeqFeature(FeatureLocation(start=1134,end=1995),strand=-1,type='CDS',qualifiers={'label':'Ampicillin'})
 ]
 )
 
@@ -127,7 +142,9 @@ def med_insfind(s,e):
 
     while True:
         try:
-            insertseq = [record for record in SeqIO.parse(path + "/insert.gb","genbank")][0].seq
+            with open(path + "/insert.gb",'r') as f:
+                insertseq = [record for record in SeqIO.parse(f,"genbank")][0].seq
+            
             inslen = len(insertseq)
             if insertseq in e.seq and inslen == mutlen:
                 break
@@ -189,41 +206,19 @@ def med_insFiles(s,e,a,b,kan,insert):
         k = (ins_len - 40)/2 #k is the number of bases on either side of the direct repeat to complete the inserted sequence
         drstart = k
         drend = k + 40
-        
-        # print insert.seq
-        # print insert.seq[drstart:drend]
-
-        # print insert.seq[:drend]
-        # print insert.seq[drstart:]
     else:
         k_left = (ins_len - 40)/2 #when the insert length is uneven, same as above, except the left side is 1 bp less than k on the right
         # k_right = ins_len - 40 - k_left
 
         drstart = k_left
         drend = k_left + 40
-        # print insert.seq
-        # print insert.seq[drstart:drend]
-
-        # print insert.seq[:drend]
-        # print insert.seq[drstart:]
     
     drfeat = SeqFeature(FeatureLocation(start=drstart,end=drend),type='misc_feature',qualifiers={'note':"DirectRepeat"})
     leftfeat = SeqFeature(FeatureLocation(start=0,end=drend),type='misc_feature',qualifiers={'note':"insert_leftfrag"})
     rightfeat = SeqFeature(FeatureLocation(start=drstart,end=ins_len),type='misc_feature',qualifiers={'note':"insert_rightfrag"})
     insert.features.extend((drfeat,leftfeat,rightfeat))
-    
-    # with open(path + '/insert.gb','w') as f:
-    #         SeqIO.write(insert,f,'genbank')
-    
-    # print insert.seq[:drend]
-    # print s.seq[:a][-20:]
-    # print s.seq[b:][:20]    
 
     INT = (s[:a] + insert[:drend] + kan + insert[drstart:] + s[b:])
-
-    # print INT.seq[:a + drend][-50:]
-
-    output_file(INT,path + '/INT.gb')
 
     RES = INT[:a+drend] + INT[a+drend+len(kan)+40:] #constructs the RES SeqRecord
 
@@ -341,6 +336,103 @@ def sm_insFiles(s,e,a,b,kan,insert):
     else:
         raise ValueError('ERROR: unable to construct sequences! Aborting...')
 
+def lg_insFiles(s,e,a,b,kan,pSP72,insert):
+    """
+    Requires seven arguments: (1,2) the starting and ending genbank seqRecords s and e,
+    (3,4) string positions a and b denoting the insertion in s,
+    (5,6) a genbank seqRecord kan that contains the Isce_kan cassette and pSP72,
+    and (7) a genbank seqRecord containing the insertion sequence
+
+    ...Returns WHAT?
+
+    Also returns candidate ultramer sequences and the theoretical PCR product
+
+    GENEBLOCK PRICES
+    125     - 500bp     $89
+    501     - 750bp     $129
+    751     - 1000bp    $149
+    1001    - 1250bp    $209
+    1251    - 1500bp    $249
+    1501    - 1750bp    $289
+    1751    - 2000bp    $329
+    and so on...
+    """
+
+    ins_len = len(insert)
+    # print ins_len
+
+    if ins_len % 2 == 0:
+        k = (ins_len - 40)/2 #k is the number of bases on either side of the direct repeat to complete the inserted sequence
+        drstart = k
+        drend = k + 40
+    else:
+        k_left = (ins_len - 40)/2 #when the insert length is uneven, same as above, except the left side is 1 bp less than k on the right
+        # k_right = ins_len - 40 - k_left
+
+        drstart = k_left
+        drend = k_left + 40
+    
+    drfeat = SeqFeature(FeatureLocation(start=drstart,end=drend),type='misc_feature',qualifiers={'note':"DirectRepeat"})
+    leftfeat = SeqFeature(FeatureLocation(start=0,end=drend),type='misc_feature',qualifiers={'note':"insert_leftfrag"})
+    rightfeat = SeqFeature(FeatureLocation(start=drstart,end=ins_len),type='misc_feature',qualifiers={'note':"insert_rightfrag"})
+    insert.features.extend((drfeat,leftfeat,rightfeat))
+
+    SP72_INT = pSP72[:81] + s[a-40:a] + insert[:drend] + kan + insert[drstart:] + s[b:b+40] + pSP72[81:]
+
+    corelen1 = len(s[a-40:a] + insert[:drend])
+    gibslen1 = 30
+    checklen1 = (corelen1 + gibslen1*2) % 250
+
+    if checklen1 <= 20:
+        gibslen1 = gibslen1 - (ceil(checklen1/2.0))
+
+    corelen2 = len(insert[drstart:] + s[b:b+40])
+    gibslen2 = 30
+    checklen2 = (corelen2 + gibslen2*2) % 250
+
+    if checklen2 <= 20:
+        gibslen2 = gibslen2 - (ceil(checklen2/2.0))
+    
+    
+
+    INT = (s[:a] + insert[:drend] + kan + insert[drstart:] + s[b:])
+
+    RES = INT[:a+drend] + INT[a+drend+len(kan)+40:] #constructs the RES SeqRecord
+
+    # if RES.seq == e.seq: #Is the RES identical to the end sequence?
+    #     print "Success!"
+
+    #     flank1start = a - 40
+    #     flank1end = a
+    #     flank2start = a + len(insert[:drend]) + len(kan) + len(insert[drstart:])
+    #     flank2end = flank2start + 40
+
+    #     homflank1 = SeqFeature(FeatureLocation(start=flank1start,end=flank1end),type='misc_feature',qualifiers={'note':"HomologyFlank1"})
+    #     homflank2 = SeqFeature(FeatureLocation(start=flank2start,end=flank2end),type='misc_feature',qualifiers={'note':"HomologyFlank2"})
+
+    #     FwPrimerEnd = a + len(insert[:drend]) + 24
+    #     RvPrimerStart = a + len(insert[:drend]) + len(kan) - 23
+
+    #     FwPrimer = SeqFeature(FeatureLocation(start=flank1start,end=FwPrimerEnd),type='primer_bind',strand=1,qualifiers={'note':"Fw primer"})
+    #     RvPrimer = SeqFeature(FeatureLocation(start=RvPrimerStart,end=flank2end),type='primer_bind',strand=-1,qualifiers={'note':"Rv primer"})
+
+    #     INT.features.extend((homflank1,homflank2,FwPrimer,RvPrimer))
+
+    #     Fw = INT[flank1start:FwPrimerEnd]
+    #     Rv = INT[RvPrimerStart:flank2end].reverse_complement()
+
+    #     RES = INT[:a+drend] + INT[a+drend+len(kan)+40:] #reconstructs the RES SeqRecord
+
+    #     PCRprod = INT[flank1start:flank2end]
+
+    #     output_file(RES,path + '/RES.gb')
+    #     output_file(INT,path + '/INT.gb')
+    #     output_file(Fw,path + '/Fw_primer.gb')
+    #     output_file(Rv,path + '/Rv_primer.gb')
+    #     output_file(PCRprod,path + '/PCRprod.gb')
+    # else:
+    #     raise ValueError('ERROR: unable to construct sequences! Aborting...')
+
 if len(e) < len(s):
     print "Type of mutation: deletion..."
     print "Calculating positions of deleted bases..."
@@ -350,11 +442,11 @@ if len(e) < len(s):
     delFiles(s,e,a,b,kan)
     print "Outputting INT, RES, and primer files..."
 
-elif len(e) - len(s) >= 40 and len(e) - len(s) <= 90:
-    print "Type of mutation: medium insertion (between 40 and 90 bp in length)..."
+elif len(e) - len(s) >= 40 and len(e) - len(s) <= limit:
+    print "Type of mutation: medium insertion (between 40 and %s bp in length)..." % limit
     print "Calculating position of insertion..."
     a,b,insert = med_insfind(s,e)
-    print "Insertion %s...%s found between bases %s and %s of starting sequence..." % (insert.seq[:10],insert.seq[-10:],a,b+1)    
+    print "Insertion %s...%s found between bases %s and %s of starting sequence..." % (insert.seq[:20],insert.seq[-20:],a,b+1)    
     med_insFiles(s,e,a,b,kan,insert)
 
 elif len(e) - len(s) < 40 and len(e) - len(s) > 0:
@@ -363,3 +455,13 @@ elif len(e) - len(s) < 40 and len(e) - len(s) > 0:
     a,b,insert = med_insfind(s,e)
     print "Insertion %s found between bases %s and %s of starting sequence..." % (insert.seq,a,b+1)
     sm_insFiles(s,e,a,b,kan,insert)
+
+elif len(e) - len(s) > limit:
+    print "Type of mutation: large insertion (greater than %s bp in length)..." % limit
+    print "Calculating position of insertion..."
+    a,b,insert = med_insfind(s,e)
+    print "Insertion %s...%s found between bases %s and %s of starting sequence..." % (insert.seq[:20],insert.seq[-20:],a,b+1)
+    # lg_insFiles(s,e,a,b,kan,pSP72,insert)
+
+print pSP72.seq[:81][-20:]
+print pSP72.seq[81:][:20]

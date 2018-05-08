@@ -1,0 +1,57 @@
+LOCUS       insert                   762 bp    DNA     linear   SYN 07-May-2018
+DEFINITION  -
+ACCESSION   -
+KEYWORDS    -
+SOURCE      -
+FEATURES             Location/Qualifiers
+     source          <37..>762
+                     /mol_type="other DNA"
+                     /note=" [Split]"
+                     /organism="synthetic DNA construct"
+     frag            1..36
+                     /date="07-May-2018"
+                     /note="1 to 36 of GGGS_3X_S-tag"
+     frag            1..>36
+                     /date="24-Apr-2017"
+                     /note="89175 to 89255 of TB40_E BAC gO_S-tag RES [Split]"
+     frag            1..>36
+                     /note=" [Split]"
+     frag            1..>36
+                     /date="01-Dec-2016"
+                     /note=" [Split]"
+     CDS             1..36
+                     /note="GGGS(3x) linker"
+     frag            37..762
+                     /date="07-May-2018"
+                     /note="953 to 1678 of pMCS-BioID2-HA"
+     CDS             37..732
+                     /codon_start=1
+                     /label=BioID2
+                     /product="promiscuous R40G mutant of a biotin protein 
+                     ligase from Aquifex aeolicus (Kim et al., 2016)"
+                     /translation="FKNLIWLKEVDSTQERLKEWNVSYGTALVADRQTKGRGGLGRKWL
+                     SQEGGLYFSFLLNPKEFENLLQLPLVLGLSVSEALEEITEIPFSLKWPNDVYFQEKKVS
+                     GVLCELSKDKLIVGIGINVNQREIPEEIKDRATTLYEITGKDWDRKEVLLKVLKRISEN
+                     LKKFKEKSFKEFKGKIESKMLYLGEEVKLLGEGKITGKLVGLSEKGGALILTEEGIKEI
+                     LSGEFSLRRS"
+     CDS             733..759
+                     /codon_start=1
+                     /label=HA
+                     /product="HA (human influenza hemagglutinin) epitope tag"
+                     /translation="YPYDVPDYA"
+BASE COUNT       196 A       180 C       277 G       109 T         0 OTHER
+ORIGIN      ?
+        1 GGGGGTGGAT CAGGAGGGGG TTCAGGCGGT GGAAGCTTCA AGAACCTGAT CTGGCTGAAG
+       61 GAGGTGGACA GCACCCAGGA GAGACTGAAG GAGTGGAACG TGAGCTACGG CACCGCCCTG
+      121 GTGGCCGACA GACAGACCAA GGGCAGAGGC GGCCTGGGCA GAAAGTGGCT GAGCCAGGAG
+      181 GGCGGCCTGT ACTTCAGCTT CCTGCTGAAC CCCAAGGAGT TCGAGAACCT GCTGCAGCTG
+      241 CCCCTGGTGC TGGGCCTGAG CGTGAGCGAG GCCCTGGAGG AGATCACCGA GATCCCCTTC
+      301 AGCCTGAAGT GGCCCAACGA CGTGTACTTC CAGGAGAAGA AGGTGAGCGG CGTGCTGTGC
+      361 GAGCTGAGCA AGGACAAGCT GATCGTGGGC ATCGGCATCA ACGTGAACCA GAGAGAGATC
+      421 CCCGAGGAGA TCAAGGACAG AGCCACCACC CTGTACGAGA TCACCGGCAA GGACTGGGAC
+      481 AGAAAGGAGG TGCTGCTGAA GGTGCTGAAG AGAATCAGCG AGAACCTGAA GAAGTTCAAG
+      541 GAGAAGAGCT TCAAGGAGTT CAAGGGCAAG ATCGAGAGCA AGATGCTGTA CCTGGGCGAG
+      601 GAGGTGAAGC TGCTGGGCGA GGGCAAGATC ACCGGCAAGC TGGTGGGCCT GAGCGAGAAG
+      661 GGCGGCGCCC TGATCCTGAC CGAGGAGGGC ATCAAGGAGA TCCTGAGCGG CGAGTTCAGC
+      721 CTGAGAAGAA GCTACCCTTA CGATGTACCG GATTACGCAT AG
+//
