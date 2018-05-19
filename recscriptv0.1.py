@@ -7,6 +7,11 @@ from Bio.Alphabet import IUPAC
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from math import ceil
 
+fprefix = ""
+
+while len(fprefix) == 0:
+    fprefix = raw_input("Add a prefix for output file names: ") + "_"
+
 path = os.path.dirname(os.path.abspath( __file__ ))
 
 with open(path + '/start.gb','r') as f:
@@ -122,11 +127,11 @@ def delFiles(s,e,a,b,kan):
 
         RES = (INT[:dr1end] + INT[dr2end:]) #reconstruct RES with new features in INT
 
-        output_file(RES,path + '/RES.gb')
-        output_file(INT,path + '/INT.gb')
-        output_file(Fw,path + '/Fw_primer.gb')
-        output_file(Rv,path + '/Rv_primer.gb')
-        output_file(PCRprod,path + '/PCRprod.gb')
+        output_file(RES,path + "/" + fprefix + 'RES.gb')
+        output_file(INT,path + "/" + fprefix + 'kanINT.gb')
+        output_file(Fw,path + "/" + fprefix + 'Fw_primer.gb')
+        output_file(Rv,path + "/" + fprefix + 'Rv_primer.gb')
+        output_file(PCRprod,path + "/" + fprefix + 'PCRprod.gb')
     else:
         raise ValueError('ERROR: unable to construct sequences! Aborting...')
 
@@ -248,11 +253,11 @@ def med_insFiles(s,e,a,b,kan,insert):
 
         PCRprod = INT[flank1start:flank2end]
 
-        output_file(RES,path + '/RES.gb')
-        output_file(INT,path + '/INT.gb')
-        output_file(Fw,path + '/Fw_primer.gb')
-        output_file(Rv,path + '/Rv_primer.gb')
-        output_file(PCRprod,path + '/PCRprod.gb')
+        output_file(RES,path + "/" + fprefix + 'RES.gb')
+        output_file(INT,path + "/" + fprefix + 'kanINT.gb')
+        output_file(Fw,path + "/" + fprefix + 'Fw_primer.gb')
+        output_file(Rv,path + "/" + fprefix + 'Rv_primer.gb')
+        output_file(PCRprod,path + "/" + fprefix + 'PCRprod.gb')
     else:
         raise ValueError('ERROR: unable to construct sequences! Aborting...')
 
@@ -298,7 +303,7 @@ def sm_insFiles(s,e,a,b,kan,insert):
 
     INT = (s[:a - k_left] + DRseq + kan + DRseq + s[b + k_right:])
 
-    # output_file(INT,path + '/INT.gb')
+    # output_file(INT,path + "/" + fprefix + 'kanINT.gb')
 
     RES = INT[:a - k_left + len(DRseq)] + INT[a - k_left + len(DRseq) + len(kan) + len(DRseq):] #constructs the RES SeqRecord
 
@@ -328,11 +333,11 @@ def sm_insFiles(s,e,a,b,kan,insert):
     
         PCRprod = INT[flank1start:flank2end]
 
-        output_file(RES,path + '/RES.gb')
-        output_file(INT,path + '/INT.gb')
-        output_file(Fw,path + '/Fw_primer.gb')
-        output_file(Rv,path + '/Rv_primer.gb')
-        output_file(PCRprod,path + '/PCRprod.gb')
+        output_file(RES,path + "/" + fprefix + 'RES.gb')
+        output_file(INT,path + "/" + fprefix + 'kanINT.gb')
+        output_file(Fw,path + "/" + fprefix + 'Fw_primer.gb')
+        output_file(Rv,path + "/" + fprefix + 'Rv_primer.gb')
+        output_file(PCRprod,path + "/" + fprefix + 'PCRprod.gb')
     else:
         raise ValueError('ERROR: unable to construct sequences! Aborting...')
 
@@ -377,7 +382,7 @@ def lg_insFiles(s,e,a,b,kan,pSP72,insert):
     rightfeat = SeqFeature(FeatureLocation(start=drstart,end=ins_len),type='misc_feature',qualifiers={'note':"insert_rightfrag"})
     insert.features.extend((drfeat,leftfeat,rightfeat))
 
-    SP72_INT = pSP72[:81] + s[a-40:a] + insert[:drend] + kan + insert[drstart:] + s[b:b+40] + pSP72[81:]
+    SP72_kanINT = pSP72[:81] + s[a-40:a] + insert[:drend] + kan + insert[drstart:] + s[b:b+40] + pSP72[81:]
 
     corelen1 = len(s[a-40:a] + insert[:drend])
     gibslen1 = 30
@@ -394,17 +399,30 @@ def lg_insFiles(s,e,a,b,kan,pSP72,insert):
         gibslen2 = gibslen2 - int(ceil(checklen2/2.0))
     
     FRAG1feat = SeqFeature(FeatureLocation(start=81-gibslen1,end=81+40+drend+gibslen1),type='misc_feature',qualifiers={'note':"FRAG1"})
-    SP72_INT.features.append(FRAG1feat)
+    
+    rightstart = SP72_kanINT.seq.find(kan.seq) + len(kan)    
+    rightend = SP72_kanINT.seq.find(pSP72.seq[81:])
 
-    output_file(SP72_INT,path + '/SP72_INT.gb')
+    FRAG2feat = SeqFeature(FeatureLocation(start=rightstart - gibslen2,end=rightend + gibslen2),type='misc_feature',qualifiers={'note':"FRAG2"})
+
+    lefthomoflank = SeqFeature(FeatureLocation(start=81,end=81 + 40),type='misc_feature',qualifiers={'note':"LeftHomologyFlank"})
+    righthomoflank = SeqFeature(FeatureLocation(start=rightend - 40,end=rightend),type='misc_feature',qualifiers={'note':"RightHomologyFlank"})
+    
+    SP72_kanINT.features.extend((FRAG1feat,FRAG2feat,lefthomoflank,righthomoflank))
+    # output_file(SP72_kanINT,path + "/" + fprefix + 'SP72_kanINT.gb')    
+
+    INT = (s[:a-40] + SP72_kanINT[81:rightend] + s[b+40:])
+    # output_file(INT,path + "/" + fprefix + 'INT.gb')
+    
+    firstDR = INT.seq.find(insert[drstart:drend].seq)
+    secondDR = INT.seq.find(insert[drstart:drend].seq,firstDR+40)
+
+    RES = INT[:firstDR+40] + INT[secondDR+40:] #constructs the RES SeqRecord
+    # output_file(RES,path + "/" + fprefix + 'RES.gb')
     
 
-    # INT = (s[:a] + insert[:drend] + kan + insert[drstart:] + s[b:])
-
-    # RES = INT[:a+drend] + INT[a+drend+len(kan)+40:] #constructs the RES SeqRecord
-
-    # if RES.seq == e.seq: #Is the RES identical to the end sequence?
-    #     print "Success!"
+    if RES.seq == e.seq: #Is the RES identical to the end sequence?
+        print "Success!"
 
     #     flank1start = a - 40
     #     flank1end = a
@@ -429,11 +447,12 @@ def lg_insFiles(s,e,a,b,kan,pSP72,insert):
 
     #     PCRprod = INT[flank1start:flank2end]
 
-    #     output_file(RES,path + '/RES.gb')
-    #     output_file(INT,path + '/INT.gb')
-    #     output_file(Fw,path + '/Fw_primer.gb')
-    #     output_file(Rv,path + '/Rv_primer.gb')
-    #     output_file(PCRprod,path + '/PCRprod.gb')
+        output_file(SP72_kanINT,path + "/" + fprefix + 'SP72_kanINT.gb')
+        output_file(RES,path + "/" + fprefix + 'RES.gb')
+        output_file(INT,path + "/" + fprefix + 'kanINT.gb')
+    #     output_file(Fw,path + "/" + fprefix + 'Fw_primer.gb')
+    #     output_file(Rv,path + "/" + fprefix + 'Rv_primer.gb')
+    #     output_file(PCRprod,path + "/" + fprefix + 'PCRprod.gb')
     # else:
     #     raise ValueError('ERROR: unable to construct sequences! Aborting...')
 
